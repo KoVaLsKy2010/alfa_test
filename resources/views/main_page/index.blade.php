@@ -37,7 +37,7 @@
             </div>
 
             <div class="col-sm-6 col-lg-2 mb-5">
-                <button type="submit" class="btn btn-primary">Расчитать</button>
+                <button type="submit" class="btn btn-primary w-100">Рассчитать</button>
             </div>
 
         </div>
