@@ -5,8 +5,11 @@ API используется на основе библиотеки [ccxt](https
 
 ## Необходимое ПО
 
-*  Docker
-*  Composer v2
+* Docker
+* Composer v2
+* ext-bcmath
+* php 8.1
+* php8.1-{dom,bcmath,gmp,xml,zip}
 
 ## Запуск
 
