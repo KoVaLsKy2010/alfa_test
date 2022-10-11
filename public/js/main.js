@@ -39,15 +39,13 @@ function ajaxCalc(){
 
                     html += '<span class="d-block">Затраты на конвертацию:</span>';
 
-                    console.log(fee);
-
                     for (var symbol in fee) {
-                        console.log(symbol);
                         html += '<span class="d-block">'+symbol+' '+fee[symbol].sum+' '+fee[symbol].symbol+'</span>';
                     }
                     html += '<span class="d-block">Число ордеров: '+data.transactions+'</span>';
-                    html += '<span class="d-block" >Конвертации:</span>'
+                    html += '<span class="d-block" >Конвертации:</span>';
                     for (var step in history) {
+                        console.log(step);
                         let symbolStep = history[step];
                         for (var symbol in symbolStep) {
                             let calculationPoint = symbolStep[symbol];

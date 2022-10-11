@@ -221,7 +221,7 @@ class Calculator
             $volume = 'fail';
 
         // Пушим логи
-        $history = [
+        array_push($history, [
             $symbol => [
                 'from' => $from,
                 'calculation'=> $calculation,
@@ -230,7 +230,7 @@ class Calculator
                 'spend' => $spend,
                 'fee' => $marketFEE[$symbol]['sum']
             ]
-        ];
+        ] );
 
         // Учет ситуации, когда у нас обратная конвертация. Прим: символ ETH/BTC, а конвертируем BTC->ETH
         if ($isInvert && $convertToSum != 0){
