@@ -41,3 +41,14 @@
 .select2-container--default .select2-selection--single .select2-selection__arrow {
     height: 34px;
 }
+
+@media (max-width: 576px) {
+    .form__calc{
+        margin-top: 50px;
+    }
+    .input-count{
+        max-width: 100%;
+        width: 100%;
+        border-color: #c0c0c0;
+    }
+}

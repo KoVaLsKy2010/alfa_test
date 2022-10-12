@@ -8,7 +8,7 @@
 @section('css')
 <link href="//cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
 <link href="//cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link rel="stylesheet" type="text/css" href="/css/main.min.css?v={{ time() }}">
+<link rel="stylesheet" type="text/css" href="/css/main.min.css?v={{ time() }}"><!-- Очень очень очень плохая плохая практика. Только для тестового -->
 @endsection
 @section('content')
 <div class="d-flex justify-content-center align-items-center" style="min-height: 40vh">
@@ -51,6 +51,6 @@
 @section('js')
 <script src="//code.jquery.com/jquery-3.6.1.min.js" integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ=" crossorigin="anonymous"></script>
 <script src="//cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="/js/main.min.js?v={{ time() }}"></script>
+<script src="/js/main.min.js?v={{ time() }}"></script><!-- Очень очень очень плохая плохая практика. Только для тестового -->
 @endsection
 
