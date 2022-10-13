@@ -292,7 +292,6 @@ class Calculator
 
     /**
      * @param string $symbol Символ тикера
-     * @param string $realFromSym Реальный символ из которого конвертируем
      * @return string Символ, в который конвертируем
      */
     private function getToSymbol(string $symbol, string $from):string
@@ -306,7 +305,7 @@ class Calculator
 
 
     /**
-     * @param float $price Стоимость
+     * @param float $number Стоимость
      * @return float Форматированная стоимость
      */
     private function formatPrice(float $number): float
@@ -338,7 +337,7 @@ class Calculator
      */
     private function round_up(float $number): float
     {
-        return  round($number, self::PRECISION, PHP_ROUND_HALF_UP);
+        return  round($number, self::PRECISION);
     }
 
     /**
