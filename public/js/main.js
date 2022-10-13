@@ -35,9 +35,9 @@ function ajaxCalc(){
                     if(response.level0.data.volume == 'fail' && response.level0.data.convertToSum > 0)
                         html += '<b style="color:red">Низкая ликвидность</b> ';
 
-                    html += '<span class="">Вы получите</span><b> ' + response.level0.data.convertToSum + '</b> ' + to;
+                    html += '<span class="d-block">Вы получите</span><b class="result"> ' + response.level0.data.convertToSum + '</b> ' + to;
 
-                    html += '<span class="d-block">Затраты на конвертацию:</span>';
+                    html += '<span class="d-block">Комиссия за конвертацию:</span>';
 
                     for (var symbol in fee) {
                         html += '<span class="d-block">'+symbol+' '+fee[symbol].sum+' '+fee[symbol].symbol+'</span>';
@@ -52,7 +52,7 @@ function ajaxCalc(){
                             let calculation = calculationPoint.calculation;
                             for (var i in calculation) {
                                 let transaction = calculation[i];
-                                html += '<span class="d-block text-sm">'+symbol+' '+transaction.orderCount+' шт. по цене <b>'+transaction.orderPrice+'</b> за один '+calculationPoint.from+'</span>';
+                                html += buildLog(symbol, transaction);
                             }
                         }
 
@@ -79,9 +79,9 @@ function ajaxCalc(){
                                 html += '<b style="color:red">Низкая ликвидность</b> ';
 
                             html += from+'->'+coin+'->'+to;
-                            html += ' <span class="">Вы получите</span> <b>' + data[coin].convertToSum + '</b> ' + to;
+                            html += ' <span class="d-block">Вы получите</span> <b class="result">' + data[coin].convertToSum + '</b> ' + to;
 
-                            html += '<span class="d-block">Затраты на конвертацию:</span>';
+                            html += '<span class="d-block">Комиссия за конвертацию:</span>';
                             for (var symbol in fee) {
                                 html += '<span class="d-block">'+symbol+' '+fee[symbol].sum+' '+fee[symbol].symbol+'</span>';
                             }
@@ -95,7 +95,7 @@ function ajaxCalc(){
                                     let calculation = calculationPoint.calculation;
                                     for (var i in calculation) {
                                         let transaction = calculation[i];
-                                        html += '<span class="d-block text-sm">'+symbol+' '+transaction.orderCount+' шт. по цене <b>'+transaction.orderPrice+'</b> за один '+calculationPoint.from+'</span>';
+                                        html += buildLog(symbol, transaction);
                                     }
                                 }
 
@@ -120,6 +120,33 @@ function ajaxCalc(){
     });
 }
 
+function buildLog(symbol, transaction){
+    let html = '',
+        realFromSymbol = transaction.realFromSym,
+        realToSym = transaction.realToSym,
+        arrival = transaction.arrivalFormated,
+        orderPrice = transaction.orderPriceRealFormated,
+        orderCount = transaction.orderCountFormated,
+        iterationFee = transaction.iterationFee,
+        iterationSpend = transaction.iterationSpendFormated,
+        spend = transaction.spend,
+        convertToSum = transaction.convertToSum,
+        tickerFromSim = transaction.tickerFromSim,
+        tickerToSim = transaction.tickerToSim;
+
+    html += '<ul>';
+    html += '<li class="">'+symbol+'</li>';
+    html += '<li class="">Приход: '+arrival+'<span class="xsmall">'+realFromSymbol+'</span></li>';
+    html += '<li class="">Истрачено на покупку: '+iterationSpend;
+    html += '<span class="xsmall">'+realFromSymbol+'</span> по цене <b>'+orderPrice;
+    html += '</b><span class="xsmall">'+tickerToSim+'</span> за 1 <span class="xsmall">'+tickerFromSim+'</span>.';
+    html += ' Доступно максимум '+orderCount+' <span class="xsmall">'+realFromSymbol+'</span>.</li>';
+    html += '<li class="">Комиссия за операцию: '+iterationFee+'<span class="xsmall">'+realFromSymbol+'</span></li>';
+    html += '<li class="">Списанная сумма: '+spend+'<span class="xsmall">'+realFromSymbol+'</span></li>';
+    html += '<li class="">Сконвертированная суммма: '+convertToSum+'<span class="xsmall">'+realToSym+'</span></li>';
+    html += '</ul>';
+    return html;
+}
 function initSelect2(){
     $('.js-from').select2();
     $('.js-to').select2();

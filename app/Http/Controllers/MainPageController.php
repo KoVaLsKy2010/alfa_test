@@ -21,11 +21,18 @@ class MainPageController extends Controller
 
     public function calc(Request $request){
         $binance = new Binance();
-        $from = $request->post('from') ? $request->post('from') : 'ETH';
-        $to = $request->post('to') ? $request->post('to') : 'XEM';
+        $from = $request->post('from') ? $request->post('from') : 'XEM';
+        $to = $request->post('to') ? $request->post('to') : 'ETH';
         $symbol = $from.'/'.$to;
-        $count = $request->post('count') ? $request->post('count') : 0.9;
+        $count = $request->post('count') ? $request->post('count') : 46051;
         $checkVariants = $binance->checkVariants($symbol);
+
+        if($request->get('symbol'))
+            dd($binance->buildTickersToTickersArray()[$request->get('symbol')]);
+
+        if($request->get('order'))
+            dd( $binance->getOrderBook($request->get('order')) );
+
         $calculator = new Calculator();
         $calculator->setExchangeData($from, $to, $count);
         $calculator->setVariants($checkVariants);

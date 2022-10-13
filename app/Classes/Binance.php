@@ -6,11 +6,11 @@
  */
 
 namespace App\Classes;
-use ccxt\Binance as BinanceExchange;
+use \ccxt\binance as BinanceExchange;
 use Illuminate\Support\Facades\Cache;
 use Exception;
-use ccxt\ExchangeError;
-use ccxt\NetworkError;
+use ccxt\exchangeError;
+use ccxt\eetworkError;
 
 class Binance
 {
@@ -52,7 +52,8 @@ class Binance
         $array = [];
         $tickers = $this->getBinanceTickers()['data'];
         foreach ($tickers as $tickerToTickerKey => $value){
-            $array[$tickerToTickerKey] = $value;
+            if($value['bidVolume'] > 0)
+                $array[$tickerToTickerKey] = $value;
         }
         ksort($array);
         return $array;
@@ -80,6 +81,7 @@ class Binance
             try {
                 $tickers = $exchange->fetch_tickers();
                 if(!is_null($tickers) && is_array($tickers)){
+
                     // Навешиваю кэш, чтобы не забанил Бинанс
                     Cache::put($cacheKey, $tickers, 60*60*24); // 1 day
                     return ['success' => true, 'data' => $tickers];
@@ -211,17 +213,26 @@ class Binance
      */
     public function getOrderBook(string $symbol): array
     {
-        $exchange = new BinanceExchange(array(
-            'timeout' => 30000,
-        ));
-        try {
-            $tickerData = $exchange->fetch_order_book ($symbol, self::ORDER_BOOK_LIMIT);
-        } catch (NetworkError $e) {
-            echo '[Network Error] ' . $e->getMessage() . "\n";
-        } catch (ExchangeError $e) {
-            echo '[Exchange Error] ' . $e->getMessage() . "\n";
-        } catch (Exception $e) {
-            echo '[Error] ' . $e->getMessage() . "\n";
+        $cacheKey   = 'getOrderBook_'.str_replace('/', '_', $symbol);
+        $tickerData = Cache::get($cacheKey);
+        if(is_null($tickerData)) {
+
+            $exchange = new BinanceExchange(array(
+                'timeout' => 30000,
+            ));
+            try {
+                $tickerData = $exchange->fetch_order_book($symbol, self::ORDER_BOOK_LIMIT);
+                // Навешиваю кэш, чтобы дебаг расчетов был верный
+                if(!is_null($tickerData))
+                    Cache::put($tickerData, $cacheKey, 60*10); // 10 минут
+
+            } catch (NetworkError $e) {
+                echo '[Network Error] ' . $e->getMessage() . "\n";
+            } catch (ExchangeError $e) {
+                echo '[Exchange Error] ' . $e->getMessage() . "\n";
+            } catch (Exception $e) {
+                echo '[Error] ' . $e->getMessage() . "\n";
+            }
         }
         return [$symbol => $tickerData];
     }
@@ -235,12 +246,11 @@ class Binance
         $data = config('app.variants_array');
         $symbols = $this->symbolToArray($symbol);
         $defaultTickers = $this->buildTickersToTickersArray();
-
         // Есть в таблице нужный тикер и его объем больше 0 (действующая пара)
         $isReverse = (array_key_exists($this->reverseTickets($symbol), $defaultTickers)
             && $defaultTickers[$this->reverseTickets($symbol)]['bidVolume'] != 0);
 
-        if( array_key_exists($symbol, $defaultTickers)
+        if( (array_key_exists($symbol, $defaultTickers) && $defaultTickers[$symbol]['bidVolume'] != 0)
             || $isReverse){
             $data['level0']['status'] = true;
             $data['level0']['data'] = $this->getTicker($symbol, $isReverse);
@@ -253,6 +263,8 @@ class Binance
 
             // Ex: ["XEM/BTC", "XEM/BUSD", "XEM/USDT", "XEM/BNB"]
             $accessSymbols2 = $this->findBinanceSymbols($variantsArray, $symbols['to']);
+
+            //dd($variantsArray, $accessSymbols1, $accessSymbols2);
 
             $data['level1']['status'] = true;
             $data['level1']['data'] = [

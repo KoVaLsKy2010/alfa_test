@@ -27,7 +27,6 @@
 
 .input-count{
     padding: 5px;
-    max-width: 120px;
     -webkit-border-radius: 3px;
     border-radius: 3px;
     border-color: #f3f3f3;
@@ -42,6 +41,13 @@
     height: 34px;
 }
 
+.result{
+    font-size: 130%;
+}
+
+.xsmall{
+    font-size: .65rem;
+}
 @media (max-width: 576px) {
     .form__calc{
         margin-top: 50px;

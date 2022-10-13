@@ -1,5 +1,5 @@
 @extends('layouts.app', ['class' => 'bg-default', 'og' => 'prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# product: http://ogp.me/ns/product#"'])
-@section('title', 'Main page')
+@section('title', 'Калькулятор конвертации криптовалют на бирже')
 @section('meta')
     <link rel="canonical" href="{{config('app.url')}}">
     <meta name="description" content="Система для для поиска наилучшего курса для покупки/продажи криптовалюты на бирже">
@@ -17,7 +17,7 @@
         <div class="row">
 
             <div class="col-sm-6 col-lg-2 mb-5">
-                <input type="number" required value="1.4" step="0.000001" name="count" placeholder="Количество" class="js-count input-count">
+                <input type="number" required value="1.4" step="0.00000001" name="count" placeholder="Количество" class="js-count input-count w-100">
             </div>
 
             <div class="col-sm-6 col-lg-4 mb-5">
