@@ -124,21 +124,17 @@ class Calculator
         $calculation = [];
 
         if(is_null($oldData)){
-
             $from = $this->from;
             $forSell = $this->count;
             $transactions = 0;
             $marketFEE = [];
             $volume = 'success';
-
         }else{
-            
             $forSell = $oldData['convertToSum'];
             $transactions = $oldData['transactions'];
             $marketFEE[ $oldData['symbol'] ] = $oldData['marketFEE'][ $oldData['symbol'] ];
             $volume = $oldData['volume'];
             $history = $oldData['history'];
-
         }
 
         // Проверяем, обратная ли конвертация
@@ -154,16 +150,13 @@ class Calculator
             $tickerToSim = $realToSym;
         }
 
-
         $marketFEE[$symbol] = ['sum' => 0, 'symbol' => ''];
         $orders = $orderBook[$symbol]['bids'];
 
         // Учет ситуации, когда у нас обратная конвертация. Прим: символ ETH/BTC, а конвертируем BTC->ETH
         // Тогда расчет делаем не по покупкам, а по продажам
-        if ($isInvert){
+        if ($isInvert)
             $orders = $orderBook[$symbol]['asks'];
-        }
-        
 
         foreach ($orders as $order){
 
@@ -177,19 +170,19 @@ class Calculator
             $orderPriceReal = $orderPrice;
 
             if ($isInvert){
-                $orderPrice = 1/$orderPrice;
-                $orderCount = $orderCount*$orderPriceReal;
-                $orderPriceReal = 1/$orderPrice;
+                $orderPrice = 1 / $orderPrice;
+                $orderCount = $orderCount * $orderPriceReal;
+                $orderPriceReal = 1 / $orderPrice;
             }
 
             // Сколько максимум BTC мы можем получить на заявку
-            $orderMax = $orderPriceReal*$orderCount;
+            $orderMax = $orderPriceReal * $orderCount;
 
             // Комиссия биржи
             $orderFeeMax = $orderCount * Binance::getFee(); // BTC
 
             // Округляем в большую сторону на 6м знаке после точки
-            $orderFeeMax = $this->round_up($orderFeeMax); // 0.0007745913617 -> 0.000774592
+            $orderFeeMax = $this->roundUp($orderFeeMax); // 0.0007745913617 -> 0.000774592
 
             // Инкремент числа транзакций
             $transactions++;
@@ -204,18 +197,17 @@ class Calculator
                 $iterationFee = $orderFeeMax;
                 $needAllOrder = true;
                 $spendIncrement = $iterationSpend + $orderFeeMax;
-                $convertToSumIncrement = $orderPrice*$orderCount;
+                $convertToSumIncrement = $orderPrice * $orderCount;
             }else{
                 $iterationSpend = $forSell - $spend;
-                $iterationFee = $this->round_up($iterationSpend * Binance::getFee());
+                $iterationFee = $this->roundUp($iterationSpend * Binance::getFee());
                 $needAllOrder = false;
                 $spendIncrement = $iterationSpend;
                 $iterationSpend -= $iterationFee;
-                $convertToSumIncrement = $iterationSpend*$orderPrice;
+                $convertToSumIncrement = $iterationSpend * $orderPrice;
             }
-
-            $spend += $this->round_up($spendIncrement);
-            $convertToSum += $this->round_down($convertToSumIncrement); //BTC
+            $spend += $this->roundUp($spendIncrement);
+            $convertToSum += $this->roundDown($convertToSumIncrement); //BTC
             // Заносим в массив для дальнейшего вывода суммы комиссии
             $marketFEE[$symbol]['sum'] += $iterationFee;
             $marketFEE[$symbol]['symbol'] = $from;
@@ -271,8 +263,6 @@ class Calculator
             ]
         ] );
         $convertToSumOld = $convertToSum;
-
-
         $convertToSum = $this->formatPrice($convertToSum);
 
         return [
@@ -335,7 +325,7 @@ class Calculator
      * @param float $number Сумма
      * @return float Округленная сумма
      */
-    private function round_up(float $number): float
+    private function roundUp(float $number): float
     {
         return  round($number, self::PRECISION);
     }
@@ -344,7 +334,7 @@ class Calculator
      * @param float $number Сумма
      * @return float Округленная сумма
      */
-    private function round_down(float $number): float
+    private function roundDown(float $number): float
     {
         return  round($number, self::PRECISION, PHP_ROUND_HALF_DOWN);
     }

@@ -179,7 +179,7 @@ class Binance
         if($isReverse)
             $symbol = $this->reverseTickets($symbol);
 
-        $cacheKey   = 'fetchTicker_'.str_replace('/', '_', $symbol);
+        $cacheKey = 'fetchTicker_'.str_replace('/', '_', $symbol);
         $tickerData = Cache::get($cacheKey);
         if(is_null($tickerData)) {
             $exchange = new BinanceExchange(array(
@@ -213,10 +213,9 @@ class Binance
      */
     public function getOrderBook(string $symbol): array
     {
-        $cacheKey   = 'getOrderBook_'.str_replace('/', '_', $symbol);
+        $cacheKey = 'getOrderBook_'.str_replace('/', '_', $symbol);
         $tickerData = Cache::get($cacheKey);
         if(is_null($tickerData)) {
-
             $exchange = new BinanceExchange(array(
                 'timeout' => 30000,
             ));
@@ -263,8 +262,6 @@ class Binance
 
             // Ex: ["XEM/BTC", "XEM/BUSD", "XEM/USDT", "XEM/BNB"]
             $accessSymbols2 = $this->findBinanceSymbols($variantsArray, $symbols['to']);
-
-            //dd($variantsArray, $accessSymbols1, $accessSymbols2);
 
             $data['level1']['status'] = true;
             $data['level1']['data'] = [
