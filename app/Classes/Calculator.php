@@ -4,11 +4,29 @@ namespace App\Classes;
 
 class Calculator
 {
-
+    /**
+     * @var string Из какой валюты конвертируем
+     */
     protected string $from;
+
+    /**
+     * @var string В какую валюту конвертируем
+     */
     protected string $to;
+
+    /**
+     * @var string Символ тикера
+     */
     protected string $symbol;
+
+    /**
+     * @var float Сколько мы хотим сконвертировать валюты
+     */
     protected float $count;
+
+    /**
+     * @var array Массив с вариантами конвертации
+     */
     protected array $variants;
 
     /**
@@ -32,7 +50,6 @@ class Calculator
         $tickers = $binance->getBinanceTickers();
         $symbol = $from.'/'.$to;
         $this->symbol = (array_key_exists($symbol, $tickers['data'])) ? $symbol : $to.'/'.$from;
-
     }
 
     /**
@@ -52,13 +69,11 @@ class Calculator
     {
         $array = [];
         $data = config('app.prices_array');
-        $orderBookArray = [];
         $binance = new Binance();
 
         // Можно обменять напрямую
         if($this->variants['level0']['status']){
             $orderBook = $binance->getOrderBook($this->symbol);
-            $orderBookArray[$this->symbol] = $orderBook;
             $data['level0']['status'] = true;
             $data['level0']['data'] = $this->getTransactionsSum($orderBook, $this->symbol);
 
@@ -68,23 +83,16 @@ class Calculator
             foreach ($this->variants['level1']['data']['fromToGap'] as $symbol){
                 $orderBook = $binance->getOrderBook($symbol);
                 $arrayKey = $this->makeToKey($symbol);
-                $orderBookArray[$arrayKey] = $orderBook;
                 $array['fromToGap'][$arrayKey] = $this->getTransactionsSum($orderBook, $symbol);
             }
-            
+
             foreach ($this->variants['level1']['data']['gapToEnd'] as $symbol){
                 $orderBook = $binance->getOrderBook($symbol);
                 $arrayKey = $this->makeFromKey($symbol);
-                $orderBookArray[$arrayKey] = $orderBook;
                 $array['gapToEnd'][$arrayKey] = $this->getTransactionsSum($orderBook, $symbol, $array['fromToGap'][$arrayKey], $arrayKey);
             }
             $data['level1']['status'] = true;
             $data['level1']['data'] = $array['gapToEnd'];
-
-        // Можно обменять через 2 промежуточных коина
-        // Не уверен, что такие ситуации есть. Будет очень прожорливая для расчета операция
-        }else{
-            //TODO: Написать расчет для 2х посредников
         }
 
         return $data;
@@ -117,180 +125,77 @@ class Calculator
      */
     private function getTransactionsSum(array $orderBook, string $symbol, array $oldData = null, string $from = null): array
     {
-        $spend = 0;
-        $convertToSum = 0;
         $history = [];
-        $volumeFailed = true;
-        $calculation = [];
 
         if(is_null($oldData)){
             $from = $this->from;
             $forSell = $this->count;
-            $transactions = 0;
-            $marketFEE = [];
             $volume = 'success';
+            $transactions = 0;
         }else{
             $forSell = $oldData['convertToSum'];
             $transactions = $oldData['transactions'];
-            $marketFEE[ $oldData['symbol'] ] = $oldData['marketFEE'][ $oldData['symbol'] ];
             $volume = $oldData['volume'];
             $history = $oldData['history'];
         }
 
         // Проверяем, обратная ли конвертация
-        $isInvert = $this->isInvert($symbol, $from);
-        $realFromSym = $from;
-        $realToSym = $this->getToSymbol($symbol, $realFromSym);
-
-        if($isInvert){
-            $tickerFromSim = $realToSym;
-            $tickerToSim = $realFromSym;
-        }else{
-            $tickerFromSim = $realFromSym;
-            $tickerToSim = $realToSym;
-        }
-
-        $marketFEE[$symbol] = ['sum' => 0, 'symbol' => ''];
+        $isInvert = Binance::isInvert($symbol, $from);
+        $isStraight = Binance::isStraight($symbol);
+        $realFromSymbol = $from;
+        $realToSymbol = Binance::getToSymbol($symbol, $realFromSymbol);
         $orders = $orderBook[$symbol]['bids'];
 
-        // Учет ситуации, когда у нас обратная конвертация. Прим: символ ETH/BTC, а конвертируем BTC->ETH
-        // Тогда расчет делаем не по покупкам, а по продажам
-        if ($isInvert)
+        if($isInvert){
+            // Учет ситуации, когда у нас обратная конвертация. Прим: символ ETH/BTC, а конвертируем BTC->ETH
+            // Тогда расчет делаем не по покупкам, а по продажам
             $orders = $orderBook[$symbol]['asks'];
-
-        foreach ($orders as $order){
-
-            /*
-             * $order Example
-             * 0.05 BTC -> USDT
-             * $symbol = USDT/BTC
-             */
-            $orderPrice = $order[0];
-            $orderCount = $order[1];
-            $orderPriceReal = $orderPrice;
-
-            if ($isInvert){
-                $orderPrice = 1 / $orderPrice;
-                $orderCount = $orderCount * $orderPriceReal;
-                $orderPriceReal = 1 / $orderPrice;
-            }
-
-            // Сколько максимум BTC мы можем получить на заявку
-            $orderMax = $orderPriceReal * $orderCount;
-
-            // Комиссия биржи
-            $orderFeeMax = $orderCount * Binance::getFee(); // BTC
-
-            // Округляем в большую сторону на 6м знаке после точки
-            $orderFeeMax = $this->roundUp($orderFeeMax); // 0.0007745913617 -> 0.000774592
-
-            // Инкремент числа транзакций
-            $transactions++;
-
-            $arrival = $forSell - $spend;
-
-            // Проверка, нужна ли нам вся заявка
-            $need = $forSell - $spend - $orderCount - $orderFeeMax; // USDT
-            $needCalc = [$forSell, $spend, $orderCount, $orderFeeMax];
-            if($need > 0){
-                $iterationSpend = $orderCount;
-                $iterationFee = $orderFeeMax;
-                $needAllOrder = true;
-                $spendIncrement = $iterationSpend + $orderFeeMax;
-                $convertToSumIncrement = $orderPrice * $orderCount;
-            }else{
-                $iterationSpend = $forSell - $spend;
-                $iterationFee = $this->roundUp($iterationSpend * Binance::getFee());
-                $needAllOrder = false;
-                $spendIncrement = $iterationSpend;
-                $iterationSpend -= $iterationFee;
-                $convertToSumIncrement = $iterationSpend * $orderPrice;
-            }
-            $spend += $this->roundUp($spendIncrement);
-            $convertToSum += $this->roundDown($convertToSumIncrement); //BTC
-            // Заносим в массив для дальнейшего вывода суммы комиссии
-            $marketFEE[$symbol]['sum'] += $iterationFee;
-            $marketFEE[$symbol]['symbol'] = $from;
-
-            $calculation[] = [
-                'orderPrice' => $orderPrice,
-                'orderPriceFormated' => $this->formatPrice($orderPrice),
-                'orderCount' => $orderCount,
-                'orderCountFormated' => $this->formatPrice($orderCount),
-                'orderMax' => $orderMax,
-                'orderPriceReal' => $orderPriceReal,
-                'orderPriceRealFormated' => $this->formatPrice($orderPriceReal),
-                'arrival' => $arrival,
-                'arrivalFormated' => $this->formatPrice($arrival),
-                'iterationFee' => $iterationFee,
-                'iterationSpend' => $iterationSpend,
-                'iterationSpendFormated' => $this->formatPrice($iterationSpend),
-                'need' => $need,
-                'needCalc' => $needCalc,
-                'spend' => $spend,
-                'isInvert' => $isInvert,
-                'needAllOrder' => $needAllOrder,
-                'forSell' => $forSell,
-                'convertToSum' => $convertToSum,
-                'realFromSym' => $realFromSym,
-                'realToSym' => $realToSym,
-                'tickerFromSim' => $tickerFromSim,
-                'tickerToSim' => $tickerToSim
-            ];
-
-            // Выходим из цикла, если ликвидности достаточно и сможем потратить всю исходную сумму
-            if(!$needAllOrder){
-                $volumeFailed = false;
-                break;
-            }
-
+            $tickerFromSymbol = $realToSymbol;
+            $tickerToSymbol = $realFromSymbol;
+        }else{
+            $tickerFromSymbol = $realFromSymbol;
+            $tickerToSymbol = $realToSymbol;
         }
+
+        $order = new Order();
+        $order->calcOrder($orders, $forSell, $isInvert, $isStraight);
 
         // Если объема в *Binance::ORDER_BOOK_LIMIT* (100) ордеров нам не достаточно, обменять не сможем.
         // Делать более 100, пожалуй, коммерческого смысла нет
-        if( $volumeFailed )
+        if( $order->volumeFailed )
             $volume = 'fail';
 
+        $transactions += $order->transactions;
+
         // Пушим логи
-        array_push($history, [
+        $history[] = [
             $symbol => [
                 'from' => $from,
-                'calculation'=> $calculation,
-                'transactions' => $transactions,
-                'convertToSum' => $convertToSum,
-                'spend' => $spend,
-                'fee' => $marketFEE[$symbol]['sum']
+                'calculation'=> $order->log,
+                'transactions' => $order->transactions,
+                'convertToSum' => $order->convertToSum,
+                'spend' => $order->spend,
+                'fee' => $order->marketFEE,
+                'realFromSymbol' => $realFromSymbol,
+                'realToSymbol' => $realToSymbol,
+                'tickerFromSymbol' => $tickerFromSymbol,
+                'tickerToSymbol' => $tickerToSymbol,
+                'isStraight' => $isStraight,
+                'isInvert' => $isInvert
             ]
-        ] );
-        $convertToSumOld = $convertToSum;
-        $convertToSum = $this->formatPrice($convertToSum);
+        ];
 
         return [
             'volume' => $volume,
             'transactions' => $transactions,
-            'spend' => is_null($oldData) ? $spend : $this->formatPrice($spend),
-            'convertToSum' => is_null($oldData) ? $convertToSum : $this->formatPrice($convertToSum),
-            'convertToSumOld' => is_null($oldData) ? $convertToSumOld : $this->formatPrice($convertToSumOld),
+            'spend' => is_null($oldData) ? $order->spend : self::formatPrice($order->spend),
+            'convertToSum' => is_null($oldData) ? $order->convertToSum : self::formatPrice($order->convertToSum),
             'isInvert' => $isInvert,
             'forSell' => $forSell,
-            'marketFEE' => $marketFEE,
+            'marketFEE' => $order->marketFEE,
             'symbol' => $symbol,
             'history' => $history
         ];
-
-    }
-
-    /**
-     * @param string $symbol Символ тикера
-     * @return string Символ, в который конвертируем
-     */
-    private function getToSymbol(string $symbol, string $from):string
-    {
-        if( str_starts_with($symbol, $from) ){
-            return str_replace($from.'/', '',$symbol);
-        }else{
-            return str_replace('/'.$from, '',$symbol);
-        }
     }
 
 
@@ -298,7 +203,7 @@ class Calculator
      * @param float $number Стоимость
      * @return float Форматированная стоимость
      */
-    private function formatPrice(float $number): float
+    static public function formatPrice(float $number): float
     {
         $precision = self::PRECISION;
         $separator = '.';
@@ -312,20 +217,10 @@ class Calculator
     }
 
     /**
-     * @param string $symbol Символ тикера
-     * @param string $from В какой коин пытаемся конвертировать
-     * @return bool В прямом или обратном порядке идет конвертация
-     */
-    private function isInvert(string $symbol, string $from): bool
-    {
-        return !str_starts_with($symbol, $from);
-    }
-
-    /**
      * @param float $number Сумма
      * @return float Округленная сумма
      */
-    private function roundUp(float $number): float
+    static public function roundUp(float $number): float
     {
         return  round($number, self::PRECISION);
     }
@@ -334,7 +229,7 @@ class Calculator
      * @param float $number Сумма
      * @return float Округленная сумма
      */
-    private function roundDown(float $number): float
+    static public function roundDown(float $number): float
     {
         return  round($number, self::PRECISION, PHP_ROUND_HALF_DOWN);
     }

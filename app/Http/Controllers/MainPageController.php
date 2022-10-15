@@ -21,10 +21,10 @@ class MainPageController extends Controller
 
     public function calc(Request $request){
         $binance = new Binance();
-        $from = $request->post('from') ? $request->post('from') : 'XEM';
-        $to = $request->post('to') ? $request->post('to') : 'ETH';
+        $from = $request->post('from') ? $request->post('from') : 'ETH';
+        $to = $request->post('to') ? $request->post('to') : 'XEM';
         $symbol = $from.'/'.$to;
-        $count = $request->post('count') ? $request->post('count') : 46051;
+        $count = $request->post('count') ? $request->post('count') : 1.4;
         $checkVariants = $binance->checkVariants($symbol);
 
         if($request->get('symbol'))

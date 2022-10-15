@@ -30,6 +30,8 @@ class Binance
      */
     const ORDER_BOOK_LIMIT = 100;
 
+    const FIAT_SYMBOLS = ['AUD', 'BIDR', 'BRL', 'BUSD', 'EUR', 'GBP', 'RUB', 'TRY', 'TUSD', 'UAH', 'USDC', 'USDP', 'USDT'];
+
     public function __construct()
     {
         date_default_timezone_set('UTC');
@@ -80,7 +82,7 @@ class Binance
             ));
             try {
                 $tickers = $exchange->fetch_tickers();
-                if(!is_null($tickers) && is_array($tickers)){
+                if(is_array($tickers)){
 
                     // Навешиваю кэш, чтобы не забанил Бинанс
                     Cache::put($cacheKey, $tickers, 60*60*24); // 1 day
@@ -355,6 +357,42 @@ class Binance
             'from' => $data[0],
             'to' => $data[1]
         ];
+    }
+
+    /**
+     * @param string $symbol Символ тикера
+     * @param string $from В какой коин пытаемся конвертировать
+     * @return bool В прямом или обратном порядке идет конвертация
+     */
+    static public function isInvert(string $symbol, string $from): bool
+    {
+        return !str_starts_with($symbol, $from);
+    }
+
+    /**
+     * @param string $symbol Символ тикера
+     * @return bool
+     * Проверяем, прямая ли у нас пара. Т.е конвертация в фиат.
+     * Если да, цены в тикерах указаны ВСЕГДА в фиате
+     */
+    static function isStraight(string $symbol): bool
+    {
+        $symbols = explode('/', $symbol);
+        return (in_array($symbols[0], self::FIAT_SYMBOLS)
+            || in_array($symbols[1], self::FIAT_SYMBOLS));
+    }
+
+    /**
+     * @param string $symbol Символ тикера
+     * @return string Символ, в который конвертируем
+     */
+    static public function getToSymbol(string $symbol, string $from):string
+    {
+        if( str_starts_with($symbol, $from) ){
+            return str_replace($from.'/', '',$symbol);
+        }else{
+            return str_replace('/'.$from, '',$symbol);
+        }
     }
 
 }

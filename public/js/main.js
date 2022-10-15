@@ -45,14 +45,24 @@ function ajaxCalc(){
                     html += '<span class="d-block">Число ордеров: '+data.transactions+'</span>';
                     html += '<span class="d-block" >Конвертации:</span>';
                     for (var step in history) {
-                        console.log(step);
                         let symbolStep = history[step];
                         for (var symbol in symbolStep) {
                             let calculationPoint = symbolStep[symbol];
                             let calculation = calculationPoint.calculation;
+                            let realFromSymbol = calculationPoint.realFromSymbol,
+                                realToSymbol = calculationPoint.realToSymbol,
+                                tickerFromSymbol = calculationPoint.tickerFromSymbol,
+                                tickerToSymbol = calculationPoint.tickerToSymbol;
                             for (var i in calculation) {
                                 let transaction = calculation[i];
-                                html += buildLog(symbol, transaction);
+                                html += buildLog(
+                                    symbol,
+                                    transaction,
+                                    realFromSymbol,
+                                    realToSymbol,
+                                    tickerFromSymbol,
+                                    tickerToSymbol
+                                );
                             }
                         }
 
@@ -93,9 +103,21 @@ function ajaxCalc(){
                                 for (var symbol in symbolStep) {
                                     let calculationPoint = symbolStep[symbol];
                                     let calculation = calculationPoint.calculation;
+                                    let realFromSymbol = calculationPoint.realFromSymbol,
+                                        realToSymbol = calculationPoint.realToSymbol,
+                                        tickerFromSymbol = calculationPoint.tickerFromSymbol,
+                                        tickerToSymbol = calculationPoint.tickerToSymbol;
+
                                     for (var i in calculation) {
                                         let transaction = calculation[i];
-                                        html += buildLog(symbol, transaction);
+                                        html += buildLog(
+                                            symbol,
+                                            transaction,
+                                            realFromSymbol,
+                                            realToSymbol,
+                                            tickerFromSymbol,
+                                            tickerToSymbol
+                                            );
                                     }
                                 }
 
@@ -120,30 +142,35 @@ function ajaxCalc(){
     });
 }
 
-function buildLog(symbol, transaction){
+function buildLog(symbol,
+                  transaction,
+                  realFromSymbol,
+                  realToSymbol,
+                  tickerFromSymbol,
+                  tickerToSymbol){
     let html = '',
-        realFromSymbol = transaction.realFromSym,
-        realToSym = transaction.realToSym,
+        //tickerFromSymbol = transaction.tickerFromSymbol,
+        //tickerToSymbol = transaction.tickerToSymbol,
+        //realFromSymbol = transaction.realFromSym,
+        //realToSym = transaction.realToSym,
         arrival = transaction.arrivalFormated,
         orderPrice = transaction.orderPriceRealFormated,
         orderCount = transaction.orderCountFormated,
         iterationFee = transaction.iterationFee,
         iterationSpend = transaction.iterationSpendFormated,
         spend = transaction.spend,
-        convertToSum = transaction.convertToSum,
-        tickerFromSim = transaction.tickerFromSim,
-        tickerToSim = transaction.tickerToSim;
+        convertToSum = transaction.convertToSum;
 
     html += '<ul>';
     html += '<li class="">'+symbol+'</li>';
     html += '<li class="">Приход: '+arrival+'<span class="xsmall">'+realFromSymbol+'</span></li>';
     html += '<li class="">Истрачено на покупку: '+iterationSpend;
     html += '<span class="xsmall">'+realFromSymbol+'</span> по цене <b>'+orderPrice;
-    html += '</b><span class="xsmall">'+tickerToSim+'</span> за 1 <span class="xsmall">'+tickerFromSim+'</span>.';
-    html += ' Доступно максимум '+orderCount+' <span class="xsmall">'+realFromSymbol+'</span>.</li>';
+    html += '</b><span class="xsmall">'+tickerToSymbol+'</span> за 1<span class="xsmall">'+tickerFromSymbol+'</span>.</li>';
+    html += '<li class="">В ордере выбло дсотупно для конвертации '+orderCount+'<span class="xsmall">'+realFromSymbol+'</span>.</li>';
     html += '<li class="">Комиссия за операцию: '+iterationFee+'<span class="xsmall">'+realFromSymbol+'</span></li>';
     html += '<li class="">Списанная сумма: '+spend+'<span class="xsmall">'+realFromSymbol+'</span></li>';
-    html += '<li class="">Сконвертированная суммма: '+convertToSum+'<span class="xsmall">'+realToSym+'</span></li>';
+    html += '<li class="">Сконвертированная суммма: '+convertToSum+'<span class="xsmall">'+realToSymbol+'</span></li>';
     html += '</ul>';
     return html;
 }
