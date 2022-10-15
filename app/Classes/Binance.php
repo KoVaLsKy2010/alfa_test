@@ -30,6 +30,9 @@ class Binance
      */
     const ORDER_BOOK_LIMIT = 100;
 
+    /**
+     * Массив с фиатными символами
+     */
     const FIAT_SYMBOLS = ['AUD', 'BIDR', 'BRL', 'BUSD', 'EUR', 'GBP', 'RUB', 'TRY', 'TUSD', 'UAH', 'USDC', 'USDP', 'USDT'];
 
     public function __construct()
@@ -115,7 +118,6 @@ class Binance
         }
     }
 
-
     /**
      * @return array Массив с вариантами конвертаций с учетом кэша
      * @example
@@ -135,7 +137,6 @@ class Binance
         }
         return $variants;
     }
-
 
     /**
      * @param array $tickers Массив с вариантами конвертаций
@@ -164,7 +165,6 @@ class Binance
         }
         return $tickersToTickers;
     }
-
 
     /**
      * @param string $symbol Тикер.
@@ -203,7 +203,6 @@ class Binance
             }
         }
         return $tickerData;
-
     }
 
     /**
@@ -392,5 +391,4 @@ class Binance
             return str_replace('/'.$from, '',$symbol);
         }
     }
-
 }
