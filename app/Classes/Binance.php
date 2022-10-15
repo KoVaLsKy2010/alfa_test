@@ -83,7 +83,6 @@ class Binance
             try {
                 $tickers = $exchange->fetch_tickers();
                 if(is_array($tickers)){
-
                     // Навешиваю кэш, чтобы не забанил Бинанс
                     Cache::put($cacheKey, $tickers, 60*60*24); // 1 day
                     return ['success' => true, 'data' => $tickers];
@@ -155,7 +154,6 @@ class Binance
             $split = explode('/', $tickerToTickerKey);
             if( count($split) == 2){
                 $tickersToTickers[ $split[0] ][] = $split[1];
-
                 if(array_key_exists($split[1], $tickersToTickers)){
                     if( !in_array($split[0], $tickersToTickers[ $split[1] ]))
                         $tickersToTickers[ $split[1] ][] = $split[0];
