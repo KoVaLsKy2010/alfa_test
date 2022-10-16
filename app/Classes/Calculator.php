@@ -215,22 +215,4 @@ class Calculator
         }
         return $response;
     }
-
-    /**
-     * @param float $number Сумма
-     * @return float Округленная сумма
-     */
-    static public function roundUp(float $number): float
-    {
-        return  round($number, self::PRECISION);
-    }
-
-    /**
-     * @param float $number Сумма
-     * @return float Округленная сумма
-     */
-    static public function roundDown(float $number): float
-    {
-        return  round($number, self::PRECISION, PHP_ROUND_HALF_DOWN);
-    }
 }

@@ -68,7 +68,7 @@ class Order
             $orderFeeMax = $orderCount * Binance::getFee();
 
             // Округляем в большую сторону на self::PRECISION знаке после точки
-            $orderFeeMax = Calculator::roundUp($orderFeeMax); // 0.0007745913617 -> 0.000774592
+            $orderFeeMax = self::roundUp($orderFeeMax); // 0.0007745913617 -> 0.000774592
 
             // Инкремент числа транзакций
             $transactions++;
@@ -90,16 +90,16 @@ class Order
                 $convertToSumIncrement = $orderPrice * $orderCount;
             }else{
                 $iterationSpend = $forSell - $spend;
-                $iterationFee = Calculator::roundUp($iterationSpend * Binance::getFee());
+                $iterationFee = self::roundUp($iterationSpend * Binance::getFee());
                 $needAllOrder = false;
                 $spendIncrement = $iterationSpend;
                 $iterationSpend -= $iterationFee;
                 $convertToSumIncrement = $iterationSpend * $orderPrice;
             }
 
-            $spend += Calculator::roundUp($spendIncrement);
-            $convertToSum += Calculator::roundDown($convertToSumIncrement);
-            $this->log[] = $this->makeLogArray([
+            $spend += self::roundUp($spendIncrement);
+            $convertToSum += self::roundDown($convertToSumIncrement);
+            $this->log[] = OrderLog::makeLogArray([
                     'spend' => $spend,
                     'convertToSum' => $convertToSum,
                     'forSell' => $forSell,
@@ -131,19 +131,20 @@ class Order
     }
 
     /**
-     * @param array ...$args Массив ключ => значение.
-     * Если значение типа float, в итоговый массив добавляется форматированная строка
-     * @return array
+     * @param float $number Сумма
+     * @return float Округленная сумма
      */
-    public function makeLogArray(array ...$args): array
+    static public function roundUp(float $number): float
     {
-        $data = [];
-        foreach ($args[0] as $argKey => $argValue){
-            if(is_float($argValue))
-                $data[$argKey.'Formated'] = Calculator::formatPrice($argValue);
+        return  round($number, Calculator::PRECISION);
+    }
 
-            $data[$argKey] = $argValue;
-        }
-        return $data;
+    /**
+     * @param float $number Сумма
+     * @return float Округленная сумма
+     */
+    static public function roundDown(float $number): float
+    {
+        return  round($number, Calculator::PRECISION, PHP_ROUND_HALF_DOWN);
     }
 }
